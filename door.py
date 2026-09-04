@@ -3,7 +3,7 @@ import streamlit as st
 
 st.set_page_config(page_title="Three Kingdoms", page_icon="⚔️", layout="centered")
 
-IMG = Path("images")
+IMG = Path(".")
 
 # Put your drawings in an images folder using these names.
 PICTURES = {
