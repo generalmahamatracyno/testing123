@@ -197,8 +197,8 @@ def status():
     cols[3].metric("⚔️", st.session_state.weapon)
     cols[4].metric("🧪", st.session_state.potions)
     st.caption(f"Adventurer: {st.session_state.adventurer or 'Not chosen'} · Shields: {st.session_state.shields}")
-    if st.session_state.items:
-        st.write("**Important items:** " + ", ".join(st.session_state.items))
+    if st.session_state["items"]:
+        st.write("**Important items:** " + ", ".join(st.session_state["items"]))
 
 
 def story(title, text):
@@ -324,9 +324,9 @@ elif S == "ophidia_ruler":
     story("👑 Choose Ophidia's Ruler", "After the fight, the twins ask you to appoint a ruler.")
     c1, c2 = st.columns(2)
     if c1.button("Crown Drako", use_container_width=True):
-        st.session_state.items += ["Snake Fang"]; st.session_state.ophidia_done = True; go("before_wolvendom", "Drako is crowned and gives you a Snake Fang and map."); st.rerun()
+        st.session_state["items"].append["Snake Fang"]; st.session_state.ophidia_done = True; go("before_wolvendom", "Drako is crowned and gives you a Snake Fang and map."); st.rerun()
     if c2.button("Crown Hydra", use_container_width=True):
-        st.session_state.hearts -= 1; st.session_state.items += ["Snake Fang"]; st.session_state.ophidia_done = True; go("before_wolvendom", "Hydra betrays you. You and Drako escape; you lose 1 heart. Drako becomes king."); st.rerun()
+        st.session_state.hearts -= 1; st.session_state["items"] += ["Snake Fang"]; st.session_state.ophidia_done = True; go("before_wolvendom", "Hydra betrays you. You and Drako escape; you lose 1 heart. Drako becomes king."); st.rerun()
 elif S == "before_wolvendom":
     story("Journey to Wolvendom", "Would you like to rest before leaving?")
     c1, c2 = st.columns(2)
@@ -370,7 +370,7 @@ elif S == "maha_peace":
     next_button("wolf_reward")
 elif S == "wolf_reward":
     story("Wolvendom Restored", "Maha Bhediya becomes king and gives you Wolf Fur and a map to Ketanmara.")
-    if "Wolf Fur" not in st.session_state.items: st.session_state.items.append("Wolf Fur")
+    if "Wolf Fur" not in st.session_state["items"]: st.session_state["items"].append("Wolf Fur")
     next_button("ketanmara")
 
 elif S == "ketanmara":
@@ -396,7 +396,7 @@ elif S == "indera":
 elif S == "cengkerang_battle": battle("Cengkerang", 6, "crab_reward")
 elif S == "crab_reward":
     story("👑 Ketanmara Restored", "Indera shows compassion. Cengkerang is spared and crowned king. You receive the Crab Shell.")
-    if "Crab Shell" not in st.session_state.items: st.session_state.items.append("Crab Shell")
+    if "Crab Shell" not in st.session_state["items"]: st.session_state["items"].append("Crab Shell")
     next_button("ending")
 
 elif S == "ending":
