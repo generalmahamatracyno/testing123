@@ -142,7 +142,7 @@ def battle(name, level, destination):
 
 def shop(done_key, back, weapon_level, normal_price, place):
     st.subheader(place)
-    pic("Merchant")
+    
 
     price = (
         1
