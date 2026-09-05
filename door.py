@@ -40,12 +40,12 @@ def initial():
     return {
         "scene":"choose", "adventurer":None, "hearts":5, "max_hearts":5,
         "stamina":5, "coins":0, "weapon":0, "potions":0, "shields":0,
-        "message":"", "items":[], "seen":[], "battle_done":False, "battle_damage":0,
+        "message":"", "merchant_messages":{}, "items":[], "seen":[], "battle_done":False, "battle_damage":0,
         "start_cabin_done":False, "wolf_cabin_done":False, "crab_cabin_done":False,
         "forest_shop_done":False, "ophidia_shop_done":False, "wolf_shop_done":False,
         "crab_shop_done":False, "ancient_tavern_done":False, "crab_tavern_done":False,
         "twin_choice":None, "baby_wolf":False, "baby_name":"", "wolf_warning":False,
-        "maha_fought_alone":False,
+        "maha_fought_alone":False, 
     }
 
 def reset():
@@ -141,26 +141,83 @@ def battle(name, level, destination):
         next_to(destination)
 
 def shop(done_key, back, weapon_level, normal_price, place):
-    st.subheader(place); pic("Merchant")
-    if st.session_state[done_key]:
-        st.info("You already made your one purchase here."); next_to(back,"Return outside")
-        return
-    price=1 if st.session_state.adventurer=="Mage" else normal_price
-    say("Merchant",f"Welcome! Choose one item. Each costs {price} coin{'s' if price!=1 else ''}.",f"{done_key}_hello")
-    a,b,c=st.columns(3); choice=None
-    if a.button(f"Weapon L{weapon_level}",use_container_width=True): choice="weapon"
-    if b.button("Potion",use_container_width=True): choice="potion"
-    if c.button("Shield",use_container_width=True): choice="shield"
+    st.subheader(place)
+    pic("Merchant")
+
+    price = (
+        1
+        if st.session_state.adventurer == "Mage"
+        else normal_price
+    )
+
+    feedback = st.session_state["merchant_messages"].get(
+        done_key,
+        f"Welcome! Choose one item. Each item costs {price} coin(s)."
+    )
+
+    say(
+        "Merchant",
+        feedback,
+        f"{done_key}_{feedback}"
+    )
+
+    a, b, c = st.columns(3)
+    choice = None
+
+    if a.button(
+        f"Weapon Level {weapon_level}",
+        use_container_width=True
+    ):
+        choice = "weapon"
+
+    if b.button(
+        "Healing Potion",
+        use_container_width=True
+    ):
+        choice = "potion"
+
+    if c.button(
+        "Shield",
+        use_container_width=True
+    ):
+        choice = "shield"
+
     if choice:
-        if st.session_state.coins<price: st.session_state.message=f"You need {price} coin(s)."
+
+        if st.session_state[done_key]:
+            st.session_state["merchant_messages"][done_key] = (
+                "Oh, sorry! You already bought something from me."
+            )
+
+        elif st.session_state.coins < price:
+            st.session_state["merchant_messages"][done_key] = (
+                "Oh, I'm sorry! You don't have enough coins."
+            )
+
         else:
-            st.session_state.coins-=price
-            if choice=="weapon": st.session_state.weapon=max(st.session_state.weapon,weapon_level)
-            elif choice=="potion": st.session_state.potions+=1
-            else: st.session_state.shields+=1
-            st.session_state[done_key]=True; go(back,f"You bought a {choice}.")
+            st.session_state.coins -= price
+
+            if choice == "weapon":
+                st.session_state.weapon = max(
+                    st.session_state.weapon,
+                    weapon_level
+                )
+
+            elif choice == "potion":
+                st.session_state.potions += 1
+
+            elif choice == "shield":
+                st.session_state.shields += 1
+
+            st.session_state[done_key] = True
+
+            st.session_state["merchant_messages"][done_key] = (
+                "Thank you for your purchase!"
+            )
+
         st.rerun()
-    next_to(back,"Return outside")
+
+    next_to(back, "Return outside")
 
 def cabin(place,key1,key2,reward1,reward2,done_key,back):
     st.subheader(place); pic(place)
