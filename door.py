@@ -1,471 +1,425 @@
 from pathlib import Path
+import time
 import streamlit as st
 
-st.set_page_config(page_title="Three Kingdoms", page_icon="⚔️", layout="centered")
+st.set_page_config(page_title="The Three Kingdoms", page_icon="🏰", layout="centered")
+ROOT = Path(".")
 
-IMG = Path(".")
-
-# Put your drawings in an images folder using these names.
-PICTURES = {
-    "Mage": "mage.png", "Pirate": "pirate.png", "Priest": "priest.png", "Fairy": "fairy.png",
-    "Merchant": "merchant.png",
-    "Big Bat": "big_bat.png", "Drako": "drako.png", "Hydra": "hydra.png",
-    "Echidna": "echidna.png", "Drako Crowned": "drako_crowned.png", "Hydra Jail": "hydra_jail.png",
-    "Baby Wolf": "baby_wolf.png", "Maha Recognises Son": "maha_recognises_son.png",
-    "Injured Baby Wolf": "injured_baby_wolf.png", "Maha Bhediya": "maha_bhediya.png",
-    "Indera": "indera.png", "Cengkerang": "cengkerang.png",
-    "Snake Fang": "snake_fang.png", "Wolf Fur": "wolf_fur.png", "Crab Shell": "crab_shell.png",
+PICS = {
+    "Mage":"mage.png", "Pirate":"pirate.png", "Priest":"priest.png", "Fairy":"fairy.png",
+    "Player":"", "Merchant":"merchant.png", "Elder":"elder.png", "Big Bat":"big_bat.png",
+    "Drako":"drako.png", "Hydra":"hydra.png", "Echidna":"echidna.png",
+    "Drako Crowned":"drako_crowned.png", "Hydra Jail":"hydra_jail.png",
+    "Injured Wolf":"injured_baby_wolf.png", "Baby Wolf":"baby_wolf.png",
+    "Wolf Reunion":"maha_recognises_son.png", "Maha Bhediya":"maha_bhediya.png",
+    "Indera":"indera.png", "Cengkerang":"cengkerang.png",
+    "Snake Fang":"snake_fang.png", "Wolf Fur":"wolf_fur.png", "Crab Shell":"crab_shell.png",
+    "Starting Cabin":"starting_cabin.png", "Wolvendom Cabin":"wolvendom_cabin.png",
+    "Ketanmara Cabin":"ketanmara_cabin.png", "Starting Forest":"starting_forest.png",
+    "Wolvendom Forest":"wolvendom_forest.png", "Ketanmara Forest":"ketanmara_forest.png",
+    "Bushes":"bushes.png", "Potion":"healing_potion.png", "Hearts":"hearts.png",
+    "Stamina":"stamina.png", "Coins":"coins.png", "Weapon":"weapon.png",
+    "Red Key":"red_key.png", "Blue Key":"blue_key.png", "Green Key":"green_key.png",
+    "Orange Key":"orange_key.png", "Purple Key":"purple_key.png", "Pink Key":"pink_key.png",
+    "Stone Door":"stone_door.png", "Ancient Tavern":"ancient_city_tavern.png",
+    "Ketanmara Tavern":"ketanmara_tavern.png", "Rest":"resting_place.png",
+    "Work":"working_place.png", "Temple":"abandoned_temple.png", "Cloudy Castle":"cloudy_castle.png",
+    "Door 3":"door_3_silhouettes.png", "Door 2":"door_2_silhouettes.png",
+    "Door 1":"door_1_silhouette.png", "Door 0":"door_no_silhouettes.png",
+    "Door Open":"door_open_light.png",
 }
 
 ADVENTURERS = {
-    "Mage": "Starts with 4 stamina, but merchants charge only 1 coin.",
-    "Pirate": "Starts with 2 coins.",
-    "Priest": "Starts with 4 hearts, but healing potions restore 2 hearts.",
-    "Fairy": "Starts with 6 hearts, but cannot use shields.",
+    "Mage":"4 stamina; every merchant charges only 1 coin.",
+    "Pirate":"Starts with 2 coins.",
+    "Priest":"4 hearts; healing potions restore 2 hearts.",
+    "Fairy":"6 hearts; cannot use shields.",
 }
 
-
-def defaults():
+def initial():
     return {
-        "scene": "choose", "adventurer": None, "hearts": 5, "max_hearts": 5,
-        "stamina": 5, "coins": 0, "weapon": 0, "potions": 0, "shields": 0,
-        "message": "", "battle_done": False, "battle_damage": 0,
-        "red_key": False, "blue_key": False, "green_key": False,
-        "important_items": [], "baby_wolf": False, "baby_name": "",
-        "wolf_cabin_done": False, "wolf_shop_done": False, "crab_shop_done": False,
-        "ophidia_done": False, "wolvendom_done": False, "ketanmara_done": False,
-        "cabin_done": False, "tavern_done": False, "forest_shop_done": False,
-        "ophidia_shop_done": False, "wolf_shop_done": False, "wolf_cabin_done": False,
-        "crab_shop_done": False, "crab_cabin_done": False, "crab_tavern_done": False,
+        "scene":"choose", "adventurer":None, "hearts":5, "max_hearts":5,
+        "stamina":5, "coins":0, "weapon":0, "potions":0, "shields":0,
+        "message":"", "items":[], "seen":[], "battle_done":False, "battle_damage":0,
+        "start_cabin_done":False, "wolf_cabin_done":False, "crab_cabin_done":False,
+        "forest_shop_done":False, "ophidia_shop_done":False, "wolf_shop_done":False,
+        "crab_shop_done":False, "ancient_tavern_done":False, "crab_tavern_done":False,
+        "twin_choice":None, "baby_wolf":False, "baby_name":"", "wolf_warning":False,
+        "maha_fought_alone":False,
     }
 
-
 def reset():
-    for key, value in defaults().items():
-        st.session_state[key] = value.copy() if isinstance(value, list) else value
+    for k,v in initial().items(): st.session_state[k] = v.copy() if isinstance(v,list) else v
+if "scene" not in st.session_state: reset()
 
+def pic(name, width=290):
+    filename = PICS.get(name, "")
+    if name == "Player": filename = PICS.get(st.session_state.adventurer, "")
+    path = ROOT / filename
+    if filename and path.is_file(): st.image(str(path), width=width)
+    else: st.caption(f"🖼️ Add image: {filename or 'player image'}")
 
-if "scene" not in st.session_state:
-    reset()
-
+def say(speaker, text, key, image=None):
+    pic(image or ("Player" if speaker == "You" else speaker), 220)
+    st.markdown(f"**{speaker}:**")
+    if key in st.session_state.seen:
+        st.write(text)
+    else:
+        def words():
+            for word in text.split():
+                yield word + " "
+                time.sleep(0.045)
+        st.write_stream(words())
+        st.session_state.seen.append(key)
 
 def go(scene, message=""):
-    st.session_state.scene = scene
-    st.session_state.message = message
-    st.session_state.battle_done = False
-    st.session_state.battle_damage = 0
+    st.session_state.scene=scene; st.session_state.message=message
+    st.session_state.battle_done=False; st.session_state.battle_damage=0
 
-
-def picture(name, width=300):
-    path = IMG / PICTURES.get(name, "")
-    if path.is_file():
-        st.image(str(path), width=width)
-    else:
-        st.caption(f"🖼️ Add your drawing as: {PICTURES.get(name, name.lower() + '.png')}")
-
-
-def choose(name):
-    st.session_state.adventurer = name
-    st.session_state.hearts = 5
-    st.session_state.max_hearts = 5
-    st.session_state.stamina = 5
-    st.session_state.coins = 0
-    if name == "Mage":
-        st.session_state.stamina = 4
-    elif name == "Pirate":
-        st.session_state.coins = 2
-    elif name == "Priest":
-        st.session_state.hearts = 4
-    elif name == "Fairy":
-        st.session_state.hearts = 6
-        st.session_state.max_hearts = 6
-    go("adventure_start")
-
-
-def spend_stamina(amount):
-    st.session_state.stamina -= amount
-    if st.session_state.stamina <= 0:
-        st.session_state.hearts -= 1
-        st.session_state.stamina += 2
-        st.session_state.message = "Your stamina reached zero: you lost 1 heart and recovered 2 stamina."
-    check_alive()
-
+def next_to(scene, label="Next ➡️"):
+    if st.button(label, type="primary", use_container_width=True): go(scene); st.rerun()
 
 def check_alive():
-    if st.session_state.hearts <= 0:
-        go("game_over", "You ran out of hearts.")
+    if st.session_state.hearts <= 0: go("game_over", "You ran out of hearts.")
 
+def spend_stamina(n):
+    st.session_state.stamina -= n
+    if st.session_state.stamina <= 0:
+        st.session_state.hearts -= 1; st.session_state.stamina += 2
+        st.session_state.message="Stamina reached zero: −1 heart and +2 stamina."
+        check_alive()
 
-def drink_potion():
-    if st.session_state.potions <= 0:
-        st.session_state.message = "You don't have a healing potion."
-    elif st.session_state.hearts >= st.session_state.max_hearts:
-        st.session_state.message = "Your hearts are full. You don't need a healing potion."
+def heal():
+    if st.session_state.potions == 0: st.session_state.message="You don't have a healing potion."
+    elif st.session_state.hearts >= st.session_state.max_hearts: st.session_state.message="Your hearts are full. You don't need a healing potion."
     else:
-        healing = 2 if st.session_state.adventurer == "Priest" else 1
-        old = st.session_state.hearts
-        st.session_state.hearts = min(st.session_state.max_hearts, old + healing)
-        st.session_state.potions -= 1
-        st.session_state.message = f"The potion restored {st.session_state.hearts - old} heart(s)."
+        n=2 if st.session_state.adventurer=="Priest" else 1
+        old=st.session_state.hearts
+        st.session_state.hearts=min(st.session_state.max_hearts,old+n)
+        st.session_state.potions-=1
+        st.session_state.message=f"The potion restored {st.session_state.hearts-old} heart(s)."
 
+def choose(name):
+    reset(); st.session_state.adventurer=name
+    if name=="Mage": st.session_state.stamina=4
+    elif name=="Pirate": st.session_state.coins=2
+    elif name=="Priest": st.session_state.hearts=4
+    elif name=="Fairy": st.session_state.hearts=6; st.session_state.max_hearts=6
+    go("intro")
 
-def work():
+def add_item(name):
+    if name not in st.session_state["items"]: st.session_state["items"].append(name)
+
+def use_shield():
+    if st.session_state.adventurer=="Fairy": st.session_state.message="The Fairy cannot use shields."
+    elif st.session_state.shields==0: st.session_state.message="You don't have a shield."
+    elif st.session_state.battle_damage==0: st.session_state.message="No hearts were lost in this fight."
+    else:
+        st.session_state.shields-=1; st.session_state.battle_damage-=1
+        st.session_state.hearts=min(st.session_state.max_hearts,st.session_state.hearts+1)
+        st.session_state.message="The shield returned 1 heart lost in battle."
+
+def fight(name, level):
     spend_stamina(1)
-    if st.session_state.scene != "game_over":
-        st.session_state.coins += 2
-        st.session_state.message = "You worked: −1 stamina, +2 coins."
-
-
-def rest():
-    st.session_state.stamina += 2
-    st.session_state.message = "You rested and recovered 2 stamina."
-
-
-def buy(kind, level=0):
-    price = 1 if st.session_state.adventurer == "Mage" else 2
-    if st.session_state.coins < price:
-        st.session_state.message = f"You need {price} coin(s)."
-        return
-    st.session_state.coins -= price
-    if kind == "potion":
-        st.session_state.potions += 1
-        st.session_state.message = "You bought a healing potion."
-    elif kind == "shield":
-        st.session_state.shields += 1
-        st.session_state.message = "You bought a shield."
-    else:
-        st.session_state.weapon = max(st.session_state.weapon, level)
-        st.session_state.message = f"You bought a level {level} weapon."
-
-
-def one_use_shop(done_key, return_scene, weapon_level, normal_price=2):
-    picture("Merchant")
-    price = 1 if st.session_state.adventurer == "Mage" else normal_price
-    if st.session_state[done_key]:
-        st.info("You already bought one item from this merchant.")
-    else:
-        c1, c2, c3 = st.columns(3)
-        choice = None
-        if c1.button(f"Weapon L{weapon_level} — {price}", use_container_width=True): choice = "weapon"
-        if c2.button(f"Potion — {price}", use_container_width=True): choice = "potion"
-        if c3.button(f"Shield — {price}", use_container_width=True): choice = "shield"
-        if choice:
-            if st.session_state.coins >= price:
-                buy(choice, weapon_level)
-                st.session_state[done_key] = True
-                go(return_scene, "Purchase complete. This merchant allows one purchase.")
-            else:
-                st.session_state.message = f"You need {price} coin(s)."
-            st.rerun()
-    next_button(return_scene, "⬅️ Go back")
-
-
-def fight(opponent, level):
-    spend_stamina(1)
-    if st.session_state.scene == "game_over":
-        return
-    damage = max(0, level - st.session_state.weapon)
-    st.session_state.hearts -= damage
-    st.session_state.battle_damage = damage
-    st.session_state.battle_done = True
-    st.session_state.message = f"{opponent} was defeated. You lost {damage} heart(s) and 1 stamina."
+    if st.session_state.scene=="game_over": return
+    damage=max(0,level-st.session_state.weapon)
+    st.session_state.hearts-=damage; st.session_state.battle_damage=damage
+    st.session_state.battle_done=True
+    st.session_state.message=f"{name} was defeated. You lost {damage} heart(s) and 1 stamina."
     check_alive()
 
-
-def use_shields_after_fight():
-    if st.session_state.adventurer == "Fairy":
-        st.session_state.message = "The Fairy cannot use shields."
-    elif st.session_state.shields <= 0:
-        st.session_state.message = "You don't have a shield."
-    elif st.session_state.battle_damage <= 0:
-        st.session_state.message = "You lost no hearts in this fight, so you don't need a shield."
-    elif st.session_state.hearts >= st.session_state.max_hearts:
-        st.session_state.message = "Your hearts are already full."
-    else:
-        st.session_state.shields -= 1
-        st.session_state.hearts += 1
-        st.session_state.battle_damage -= 1
-        st.session_state.message = "The shield restored 1 heart lost in the fight."
-
-
-def battle(name, level, next_scene):
-    st.subheader(f"⚔️ {name} — Level {level}")
-    picture(name)
+def battle(name, level, destination):
+    st.subheader(f"⚔️ {name} — Level {level}"); pic(name)
     if not st.session_state.battle_done:
         st.write(f"Your weapon is level **{st.session_state.weapon}**. You must fight.")
-        if st.button("⚔️ Fight", use_container_width=True):
-            fight(name, level)
-            st.rerun()
+        if st.button("Fight", type="primary", use_container_width=True): fight(name,level); st.rerun()
     else:
         st.success(st.session_state.message)
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("🛡️ Use shield", use_container_width=True):
-                use_shields_after_fight(); st.rerun()
-        with c2:
-            if st.button("🧪 Drink healing potion", use_container_width=True, key="battle_potion"):
-                drink_potion(); st.rerun()
-        if st.button("Next ➡️", type="primary", use_container_width=True):
-            go(next_scene); st.rerun()
+        a,b=st.columns(2)
+        if a.button("Use shield",use_container_width=True): use_shield(); st.rerun()
+        if b.button("Drink potion",key="battle_heal",use_container_width=True): heal(); st.rerun()
+        next_to(destination)
 
+def shop(done_key, back, weapon_level, normal_price, place):
+    st.subheader(place); pic("Merchant")
+    if st.session_state[done_key]:
+        st.info("You already made your one purchase here."); next_to(back,"Return outside")
+        return
+    price=1 if st.session_state.adventurer=="Mage" else normal_price
+    say("Merchant",f"Welcome! Choose one item. Each costs {price} coin{'s' if price!=1 else ''}.",f"{done_key}_hello")
+    a,b,c=st.columns(3); choice=None
+    if a.button(f"Weapon L{weapon_level}",use_container_width=True): choice="weapon"
+    if b.button("Potion",use_container_width=True): choice="potion"
+    if c.button("Shield",use_container_width=True): choice="shield"
+    if choice:
+        if st.session_state.coins<price: st.session_state.message=f"You need {price} coin(s)."
+        else:
+            st.session_state.coins-=price
+            if choice=="weapon": st.session_state.weapon=max(st.session_state.weapon,weapon_level)
+            elif choice=="potion": st.session_state.potions+=1
+            else: st.session_state.shields+=1
+            st.session_state[done_key]=True; go(back,f"You bought a {choice}.")
+        st.rerun()
+    next_to(back,"Return outside")
+
+def cabin(place,key1,key2,reward1,reward2,done_key,back):
+    st.subheader(place); pic(place)
+    if st.session_state[done_key]:
+        st.info("You already chose one key and opened its chest."); next_to(back,"Return outside"); return
+    st.write("Choose one key. The other chest will remain locked.")
+    a,b=st.columns(2)
+    with a:
+        pic(key1,150)
+        if st.button(f"Take {key1}",use_container_width=True): reward1(); st.session_state[done_key]=True; go(back,"Chest opened once."); st.rerun()
+    with b:
+        pic(key2,150)
+        if st.button(f"Take {key2}",use_container_width=True): reward2(); st.session_state[done_key]=True; go(back,"Chest opened once."); st.rerun()
+    next_to(back,"Return outside")
 
 def status():
-    cols = st.columns(5)
-    cols[0].metric("❤️", st.session_state.hearts)
-    cols[1].metric("⚡", st.session_state.stamina)
-    cols[2].metric("🪙", st.session_state.coins)
-    cols[3].metric("⚔️", st.session_state.weapon)
-    cols[4].metric("🧪", st.session_state.potions)
-    st.caption(f"Adventurer: {st.session_state.adventurer or 'Not chosen'} · Shields: {st.session_state.shields}")
-    if st.session_state["important_items"]:
-        st.write("**Important items:** " + ", ".join(st.session_state["important_items"]))
-
-
-def story(title, text):
-    st.subheader(title)
-    st.write(text)
-
-
-def next_button(scene, label="Next ➡️"):
-    if st.button(label, type="primary", use_container_width=True):
-        go(scene); st.rerun()
-
+    values=[("Hearts","hearts"),("Stamina","stamina"),("Coins","coins"),("Weapon","weapon"),("Potion","potions")]
+    cols=st.columns(5)
+    for col,(label,key) in zip(cols,values):
+        with col: pic(label,42); st.metric(label,st.session_state[key])
+    st.caption(f"{st.session_state.adventurer} · Shields: {st.session_state.shields}")
+    if st.session_state["items"]: st.write("**Sacred items:** "+", ".join(st.session_state["items"]))
 
 st.title("🏰 The Three Kingdoms")
-if st.session_state.scene != "choose":
-    status()
-if st.session_state.message and not st.session_state.battle_done:
-    st.info(st.session_state.message)
+S=st.session_state.scene
+if S!="choose": status()
+if st.session_state.message and not st.session_state.battle_done: st.info(st.session_state.message)
 
-S = st.session_state.scene
-
-if S == "choose":
-    story("Choose your adventurer", "Each adventurer has a different ability.")
-    cols = st.columns(2)
-    for i, (name, ability) in enumerate(ADVENTURERS.items()):
-        with cols[i % 2]:
-            picture(name, 180)
-            st.markdown(f"**{name}**")
-            st.caption(ability)
-            if st.button(f"Choose {name}", key=name, use_container_width=True):
-                choose(name); st.rerun()
-
-elif S == "adventure_start":
-    story("The Adventure Begins", "Choose the cabin or the forest. You can return and visit both.")
-    c1, c2 = st.columns(2)
-    if c1.button("Cabin", use_container_width=True): go("cabin"); st.rerun()
-    if c2.button("Forest", use_container_width=True): go("forest"); st.rerun()
-elif S == "cabin":
-    story("🏚️ The Cabin", "A table holds a red key and a blue key. You may take only one.")
-    c1, c2 = st.columns(2)
-    if c1.button("Take red key", use_container_width=True):
-        st.session_state.red_key = True; go("red_chest"); st.rerun()
-    if c2.button("Take blue key", use_container_width=True):
-        st.session_state.blue_key = True; go("blue_chest"); st.rerun()
-elif S == "red_chest":
-    story("🔴 Red Chest", "The red key opens the chest: +1 healing potion and +2 coins.")
-    if not st.session_state.message:
-        st.session_state.potions += 1; st.session_state.coins += 2; st.session_state.message = "Chest collected."
-    next_button("adventure_start", "Return outside ➡️")
-elif S == "blue_chest":
-    story("🔵 Blue Chest", "The blue key opens the chest: level 1 weapon and +1 coin.")
-    if not st.session_state.message:
-        st.session_state.weapon = 1; st.session_state.coins += 1; st.session_state.message = "Chest collected."
-    next_button("adventure_start", "Return outside ➡️")
-elif S == "forest":
-    story("🌲 The Forest", "A merchant waits near a heavy stone door.")
-    c1, c2 = st.columns(2)
-    if c1.button("Visit merchant", use_container_width=True): go("forest_shop"); st.rerun()
-    if st.button("Open stone door — 2 stamina", use_container_width=True):
+if S=="choose":
+    st.subheader("Choose Your Adventurer"); cols=st.columns(2)
+    for i,(name,ability) in enumerate(ADVENTURERS.items()):
+        with cols[i%2]:
+            pic(name,180); st.markdown(f"**{name}**"); st.caption(ability)
+            if st.button(f"Choose {name}",key=name,use_container_width=True): choose(name); st.rerun()
+elif S=="intro":
+    say("You","Oh my gosh... where am I? How did I get here? I need to find a way back home.","intro")
+    next_to("start_hub")
+elif S=="start_hub":
+    st.subheader("The Wilderness")
+    a,b=st.columns(2)
+    if a.button("Visit cabin",use_container_width=True): go("start_cabin"); st.rerun()
+    if b.button("Enter forest",use_container_width=True): go("start_forest"); st.rerun()
+elif S=="start_cabin":
+    cabin("Starting Cabin","Red Key","Blue Key",
+           lambda:(setattr(st.session_state,"potions",st.session_state.potions+1),setattr(st.session_state,"coins",st.session_state.coins+2)),
+           lambda:(setattr(st.session_state,"weapon",max(1,st.session_state.weapon)),setattr(st.session_state,"coins",st.session_state.coins+1)),
+           "start_cabin_done","start_hub")
+elif S=="start_forest":
+    st.subheader("Starting Forest"); pic("Starting Forest")
+    a,b=st.columns(2)
+    if a.button("Visit merchant",use_container_width=True): go("start_shop"); st.rerun()
+    if b.button("Approach stone door",use_container_width=True): go("stone_door"); st.rerun()
+    next_to("start_hub","Return outside")
+elif S=="start_shop": shop("forest_shop_done","start_forest",1,2,"Forest Merchant")
+elif S=="stone_door":
+    st.subheader("Stone Door"); pic("Stone Door"); st.write("Opening it costs 2 stamina.")
+    if st.button("Open door",use_container_width=True):
         spend_stamina(2)
-        if st.session_state.scene != "game_over": go("cave_choice")
+        if st.session_state.scene != "game_over": go("caves")
         st.rerun()
-    next_button("adventure_start", "⬅️ Return outside")
-elif S == "forest_shop":
-    story("Forest Merchant", "Choose one item.")
-    one_use_shop("forest_shop_done", "forest", 1)
-elif S == "cave_choice":
-    story("🪨 Beyond the Door", "Choose the cave with light or the dark cave.")
-    c1, c2 = st.columns(2)
-    if c1.button("Cave with light", use_container_width=True): go("bat_battle"); st.rerun()
-    if c2.button("Dark cave", use_container_width=True): go("ancient_city"); st.rerun()
-elif S == "bat_battle": battle("Big Bat", 1, "ancient_city")
-
-elif S == "ancient_city":
-    story("🏛️ Ancient City", "You arrive at the tavern and village centre.")
-    c1, c2 = st.columns(2)
-    if c1.button("Visit tavern", use_container_width=True): go("tavern"); st.rerun()
-    if c2.button("Meet village elder", use_container_width=True): go("elder"); st.rerun()
-elif S == "tavern":
-    story("🍞 Tavern", "Choose work OR rest. The tavern can be used only once.")
-    if st.session_state.tavern_done: st.info("You already used the tavern.")
+    next_to("start_forest","Return to forest")
+elif S=="caves":
+    st.subheader("Beyond the Door"); a,b=st.columns(2)
+    if a.button("Cave with light",use_container_width=True): go("bat"); st.rerun()
+    if b.button("Dark cave",use_container_width=True): go("ancient_city"); st.rerun()
+elif S=="bat": battle("Big Bat",1,"ancient_city")
+elif S=="ancient_city":
+    st.subheader("Ancient City"); a,b=st.columns(2)
+    if a.button("Tavern",use_container_width=True): go("ancient_tavern"); st.rerun()
+    if b.button("Village elder",use_container_width=True): go("elder"); st.rerun()
+elif S=="ancient_tavern":
+    st.subheader("Ancient City Tavern"); pic("Ancient Tavern")
+    if st.session_state.ancient_tavern_done: st.info("You already chose work or rest here.")
     else:
-        c1, c2 = st.columns(2)
-        if c1.button("Work: −1 stamina, +2 coins", use_container_width=True): work(); st.session_state.tavern_done=True; go("ancient_city"); st.rerun()
-        if c2.button("Rest: +2 stamina", use_container_width=True): rest(); st.session_state.tavern_done=True; go("ancient_city"); st.rerun()
-    next_button("ancient_city", "⬅️ Return")
-elif S == "elder":
-    story("🧙 Village Elder", "The elder tells you about Ophidia, Wolvendom and Ketanmara, then gives you a map to Ophidia.")
-    next_button("ophidia")
+        a,b=st.columns(2)
+        with a:
+            pic("Work",150)
+            if st.button("Work: −1 stamina, +2 coins",use_container_width=True): spend_stamina(1); st.session_state.coins+=2; st.session_state.ancient_tavern_done=True; go("ancient_city"); st.rerun()
+        with b:
+            pic("Rest",150)
+            if st.button("Rest: +2 stamina",use_container_width=True): st.session_state.stamina+=2; st.session_state.ancient_tavern_done=True; go("ancient_city"); st.rerun()
+    next_to("ancient_city","Return outside")
+elif S=="elder":
+    say("You","Do you know how I can return home?","elder_you")
+    say("Elder","Travel to Ophidia and ask the people there. Take this map.","elder_reply")
+    next_to("ophidia")
 
-elif S == "ophidia":
-    story("🐍 Ophidia", "Choose where to go first.")
-    for label, target in [("Dungeon", "twins"), ("Market", "ophidia_market"), ("Abandoned Temple", "temple")]:
-        if st.button(label, use_container_width=True): go(target); st.rerun()
-elif S == "ophidia_market":
-    story("Ophidia Market", "The merchant sells stronger equipment.")
-    one_use_shop("ophidia_shop_done", "ophidia", 2, 3)
-elif S == "temple":
-    story("🏚️ Abandoned Temple", "The trail and sanctuary both lead deeper into Ophidia.")
-    c1, c2 = st.columns(2)
-    if c1.button("Search trail: −2 stamina, +2 coins", use_container_width=True):
-        spend_stamina(2); st.session_state.coins += 2; go("echidna_battle"); st.rerun()
-    if c2.button("Rest at sanctuary: −2 coins, +1 stamina", use_container_width=True):
-        if st.session_state.coins >= 2: st.session_state.coins -= 2; st.session_state.stamina += 1; go("echidna_battle")
-        else: st.session_state.message = "You need 2 coins."
+elif S=="ophidia":
+    st.subheader("Ophidia");
+    for label,target in [("Dungeon","dungeon"),("Merchant","ophidia_shop"),("Abandoned temple","temple")]:
+        if st.button(label,use_container_width=True): go(target); st.rerun()
+elif S=="ophidia_shop": shop("ophidia_shop_done","ophidia",2,3,"Ophidia Merchant")
+elif S=="dungeon":
+    st.subheader("Ophidia Dungeon"); pic("Drako",180); pic("Hydra",180)
+    say("Drako","These ruins hide the remains of Ophidia's ancient power.","dungeon_drako")
+    say("Hydra","Echidna guards what remains. One of us can accompany you.","dungeon_hydra")
+    a,b=st.columns(2)
+    if a.button("Choose Drako: shield +2 coins",use_container_width=True): st.session_state.shields+=1; st.session_state.coins+=2; st.session_state.twin_choice="Drako"; go("ophidia"); st.rerun()
+    if b.button("Choose Hydra: weapon L2 +1 coin",use_container_width=True): st.session_state.weapon=max(2,st.session_state.weapon); st.session_state.coins+=1; st.session_state.twin_choice="Hydra"; go("ophidia"); st.rerun()
+    next_to("ophidia","Return outside")
+elif S=="temple":
+    st.subheader("Abandoned Temple"); pic("Temple")
+    a,b=st.columns(2)
+    if a.button("Search trail: −2 stamina, +2 coins",use_container_width=True): spend_stamina(2); st.session_state.coins+=2; go("echidna"); st.rerun()
+    if b.button("Rest: −2 coins, +1 stamina",use_container_width=True):
+        if st.session_state.coins>=2: st.session_state.coins-=2; st.session_state.stamina+=1; go("echidna")
+        else: st.session_state.message="You need 2 coins."
         st.rerun()
-    next_button("ophidia", "⬅️ Return to Ophidia")
-elif S == "twins":
-    story("🐍 The Serpent Twins", "Drako and Hydra each offer help. Choose one.")
-    c1, c2 = st.columns(2)
-    with c1:
-        picture("Drako", 180)
-        if st.button("Choose Drako: shield +2 coins", use_container_width=True):
-            st.session_state.shields += 1; st.session_state.coins += 2; go("echidna_battle"); st.rerun()
-    with c2:
-        picture("Hydra", 180)
-        if st.button("Choose Hydra: level 2 weapon +1 coin", use_container_width=True):
-            st.session_state.weapon = max(2, st.session_state.weapon); st.session_state.coins += 1; go("echidna_battle"); st.rerun()
-    next_button("ophidia", "⬅️ Return to Ophidia")
-elif S == "echidna_battle": battle("Echidna", 2, "ophidia_ruler")
-elif S == "ophidia_ruler":
-    story("👑 Choose Ophidia's Ruler", "After the fight, the twins ask you to appoint a ruler.")
-    c1, c2 = st.columns(2)
-    with c1: picture("Drako", 180)
-    with c2: picture("Hydra", 180)
-    if c1.button("Crown Drako", use_container_width=True):
-        st.session_state["important_items"].append("Snake Fang"); st.session_state.ophidia_done = True; go("drako_crowned"); st.rerun()
-    if c2.button("Crown Hydra", use_container_width=True):
-        st.session_state.hearts -= 1; st.session_state["important_items"].append("Snake Fang"); st.session_state.ophidia_done = True; go("hydra_jail"); st.rerun()
-elif S == "drako_crowned":
-    story("Drako is Crowned", "Drako becomes king and gives you the Snake Fang and map.")
-    picture("Drako Crowned"); next_button("before_wolvendom")
-elif S == "hydra_jail":
-    story("Hydra's Betrayal", "Hydra imprisons you and Drako. You escape together and Drako becomes king.")
-    picture("Hydra Jail"); next_button("drako_crowned")
-elif S == "before_wolvendom":
-    story("Journey to Wolvendom", "Would you like to rest before leaving?")
-    c1, c2 = st.columns(2)
-    if c1.button("Rest: +2 stamina", use_container_width=True): rest(); go("wolvendom"); st.rerun()
-    if c2.button("Skip rest", use_container_width=True): go("wolvendom"); st.rerun()
+    next_to("ophidia","Return outside")
+elif S=="echidna": battle("Echidna",2,"choose_ruler")
+elif S=="choose_ruler":
+    say("Drako","The battle is over. Which of us do you choose to lead Ophidia?","crown_drako")
+    say("Hydra","Choose carefully. Which of us do you choose?","crown_hydra")
+    a,b=st.columns(2)
+    with a:
+        pic("Drako",180)
+        if st.button("Crown Drako",use_container_width=True): add_item("Snake Fang"); go("drako_reward"); st.rerun()
+    with b:
+        pic("Hydra",180)
+        if st.button("Crown Hydra",use_container_width=True): st.session_state.hearts-=1; check_alive(); add_item("Snake Fang"); go("hydra_jail"); st.rerun()
+elif S=="hydra_jail":
+    pic("Hydra Jail")
+    say("Hydra","You chose poorly. Both of you will remain here while I take the throne.","jail_hydra")
+    say("Drako","We will escape together. Ophidia cannot be left to her rule.","jail_drako")
+    next_to("drako_reward")
+elif S=="drako_reward":
+    st.subheader("King Drako's Gift"); a,b=st.columns(2)
+    with a: pic("Drako Crowned",220)
+    with b: pic("Snake Fang",220)
+    say("You","How can I return to my home?","drako_you")
+    say("Drako","Take this Snake Fang and map to Wolvendom. Someone there may know the way.","drako_reply")
+    next_to("before_wolvendom")
+elif S=="before_wolvendom":
+    st.subheader("Journey to Wolvendom"); a,b=st.columns(2)
+    if a.button("Rest: +2 stamina",use_container_width=True): st.session_state.stamina+=2; go("wolvendom"); st.rerun()
+    if b.button("Leave now",use_container_width=True): go("wolvendom"); st.rerun()
 
-elif S == "wolvendom":
-    story("🐺 Wolvendom", "Choose a place to visit.")
-    for label, target in [("Cabin", "wolf_cabin"), ("Merchant", "wolf_market"), ("Venture into forest", "wolf_forest")]:
-        if st.button(label, use_container_width=True): go(target); st.rerun()
-elif S == "wolf_cabin":
-    story("Wolvendom Cabin", "Choose the green key for a potion and 2 coins, or orange for a level 3 weapon and 1 coin.")
-    c1, c2 = st.columns(2)
-    if c1.button("Green key", use_container_width=True): st.session_state.potions += 1; st.session_state.coins += 2; go("wolvendom"); st.rerun()
-    if c2.button("Orange key", use_container_width=True): st.session_state.weapon = max(3, st.session_state.weapon); st.session_state.coins += 1; go("wolvendom"); st.rerun()
-    next_button("wolvendom", "⬅️ Return")
-elif S == "wolf_market":
-    story("Wolvendom Merchant", "Buy an item, then enter the forest.")
-    one_use_shop("wolf_shop_done", "wolvendom", 3)
-elif S == "wolf_forest":
-    story("Wolvendom Forest", "Search the bushes or keep moving forward.")
-    c1, c2 = st.columns(2)
-    if c1.button("Search bushes", use_container_width=True): go("baby_wolf"); st.rerun()
-    if c2.button("Keep going", use_container_width=True): go("maha_peace" if st.session_state.baby_wolf else "maha_sends_back"); st.rerun()
-    next_button("wolvendom", "⬅️ Return")
-elif S == "baby_wolf":
-    story("🐾 Injured Baby Wolf", "A baby wolf needs help. A healing potion can help it.")
-    picture("Injured Baby Wolf")
-    c1, c2 = st.columns(2)
-    if c1.button("Give healing potion", use_container_width=True):
-        if st.session_state.potions > 0: st.session_state.potions -= 1
-        else: st.session_state.hearts -= 1
-        st.session_state.baby_wolf = True; go("name_wolf")
-        st.rerun()
-    if c2.button("Leave", use_container_width=True): go("wolf_forest"); st.rerun()
-elif S == "name_wolf":
-    picture("Baby Wolf")
-    name = st.text_input("Name the baby wolf", value=st.session_state.baby_name)
-    if st.button("Keep this name", type="primary", use_container_width=True, disabled=not name.strip()):
-        st.session_state.baby_name = name.strip(); go("wolf_forest"); st.rerun()
-elif S == "maha_sends_back":
-    story("Maha Bhediya", "You must return to the forest entrance, search the bushes, and rescue his son before continuing.")
-    picture("Maha Bhediya"); next_button("wolf_forest", "Return to forest")
-elif S == "maha_peace":
-    story("👑 The Wolf King", f"Maha Bhediya recognises {st.session_state.baby_name} as his child. No fight is needed.")
-    picture("Maha Recognises Son")
-    next_button("wolf_reward")
-elif S == "wolf_reward":
-    story("Wolvendom Restored", "Maha Bhediya becomes king and gives you Wolf Fur and a map to Ketanmara.")
-    if "Wolf Fur" not in st.session_state["important_items"]: st.session_state["important_items"].append("Wolf Fur")
-    next_button("ketanmara")
+elif S=="wolvendom":
+    st.subheader("Wolvendom")
+    for label,target in [("Cabin","wolf_cabin"),("Merchant","wolf_shop"),("Venture into forest","wolf_forest")]:
+        if st.button(label,use_container_width=True): go(target); st.rerun()
+elif S=="wolf_cabin":
+    cabin("Wolvendom Cabin","Green Key","Orange Key",
+           lambda:(setattr(st.session_state,"potions",st.session_state.potions+1),setattr(st.session_state,"coins",st.session_state.coins+2)),
+           lambda:(setattr(st.session_state,"weapon",max(3,st.session_state.weapon)),setattr(st.session_state,"coins",st.session_state.coins+1)),
+           "wolf_cabin_done","wolvendom")
+elif S=="wolf_shop": shop("wolf_shop_done","wolvendom",3,2,"Wolvendom Merchant")
+elif S=="wolf_forest":
+    st.subheader("Wolvendom Forest"); pic("Wolvendom Forest"); pic("Bushes",220)
+    a,b=st.columns(2)
+    if a.button("Search bushes",use_container_width=True): go("injured_wolf"); st.rerun()
+    if b.button("Keep going",use_container_width=True): go("wolf_reunion" if st.session_state.baby_wolf else "maha_alone"); st.rerun()
+    next_to("wolvendom","Return outside")
+elif S=="injured_wolf":
+    st.subheader("The Hidden Wolf"); pic("Injured Wolf")
+    say("Baby Wolf","Please... can you help me?","injured_speaks")
+    if st.session_state.baby_wolf: st.success("The wolf has already been rescued."); next_to("wolf_forest","Return")
+    elif st.session_state.potions>0:
+        if st.button("Use healing potion",use_container_width=True): st.session_state.potions-=1; st.session_state.baby_wolf=True; go("name_wolf"); st.rerun()
+        next_to("wolf_forest","Leave")
+    elif not st.session_state.wolf_warning:
+        st.warning("You have no potion. Helping will cost 1 heart.")
+        a,b=st.columns(2)
+        if a.button("Proceed",use_container_width=True): st.session_state.wolf_warning=True; st.session_state.hearts-=1; check_alive(); st.session_state.baby_wolf=True; go("name_wolf"); st.rerun()
+        if b.button("Leave",use_container_width=True): go("wolf_forest"); st.rerun()
+elif S=="name_wolf":
+    pic("Baby Wolf"); name=st.text_input("Name the baby wolf",value=st.session_state.baby_name)
+    if st.button("Confirm name",disabled=not name.strip(),use_container_width=True): st.session_state.baby_name=name.strip(); go("wolf_forest"); st.rerun()
+elif S=="maha_alone":
+    battle("Maha Bhediya",3,"missed_wolf")
+elif S=="missed_wolf":
+    st.session_state.maha_fought_alone=True
+    st.info("Maha Bhediya escaped. You sense that you missed something near the forest entrance. Search the bushes before following him.")
+    next_to("wolf_forest","Return to forest")
+elif S=="wolf_reunion":
+    st.subheader("A Family Reunited"); pic("Wolf Reunion")
+    say(st.session_state.baby_name or "Baby Wolf","Father, stop! This adventurer saved me. There is no need to fight.","wolf_to_maha","Baby Wolf")
+    say("Maha Bhediya","Then Wolvendom's future belongs to you. I will step aside.","maha_reply")
+    next_to("wolf_reward")
+elif S=="wolf_reward":
+    st.subheader("Wolvendom's New King"); add_item("Wolf Fur"); a,b=st.columns(2)
+    with a: pic("Baby Wolf",220)
+    with b: pic("Wolf Fur",220)
+    say("You","Do you know how I can return home?","wolf_you")
+    say(st.session_state.baby_name or "Wolf King","Take this Wolf Fur and map to Ketanmara. Ask someone there for help.","wolf_reply","Baby Wolf")
+    next_to("ketanmara")
 
-elif S == "ketanmara":
-    story("🦀 Ketanmara", "Choose the village or town centre.")
-    for label, target in [("Village", "crab_village"), ("Town centre", "crab_town")]:
-        if st.button(label, use_container_width=True): go(target); st.rerun()
-elif S == "crab_village":
-    story("Ketanmara Village", "Choose the cabin, merchant, or forest.")
-    for label, target in [("Cabin", "crab_cabin"), ("Merchant", "crab_market"), ("Forest", "crab_forest")]:
-        if st.button(label, use_container_width=True): go(target); st.rerun()
-    next_button("ketanmara", "⬅️ Return")
-elif S == "crab_cabin":
-    story("Ketanmara Cabin", "Choose purple for a potion and 2 coins, or pink for a level 4 weapon and 1 coin.")
-    c1, c2 = st.columns(2)
-    if c1.button("Purple key", use_container_width=True): st.session_state.potions += 1; st.session_state.coins += 2; go("crab_village"); st.rerun()
-    if c2.button("Pink key", use_container_width=True): st.session_state.weapon = max(4, st.session_state.weapon); st.session_state.coins += 1; go("crab_village"); st.rerun()
-    next_button("crab_village", "⬅️ Return")
-elif S == "crab_market":
-    story("Ketanmara Merchant", "The weapon sold here is level 3.")
-    one_use_shop("crab_shop_done", "crab_village", 3)
-elif S == "crab_forest":
-    story("Deep Forest", "You find no route to the castle here. Perhaps investigate the town centre.")
-    next_button("crab_village", "⬅️ Return")
-elif S == "crab_town":
-    story("Town Centre", "Choose the crooked old house, merchant, or tavern. Indera can only be found by investigating the old house.")
-    for label, target in [("Crooked old house", "indera"), ("Merchant", "crab_town_market"), ("Tavern", "crab_tavern")]:
-        if st.button(label, use_container_width=True): go(target); st.rerun()
-    next_button("ketanmara", "⬅️ Return")
-elif S == "crab_town_market":
-    story("Town Merchant", "Choose one item."); one_use_shop("crab_shop_done", "crab_town", 3)
-elif S == "crab_tavern":
-    story("Ketanmara Tavern", "Choose work OR rest. It can be used once.")
-    if st.session_state.crab_tavern_done: st.info("You already used this tavern.")
+elif S=="ketanmara":
+    st.subheader("Ketanmara"); a,b=st.columns(2)
+    if a.button("Village",use_container_width=True): go("crab_village"); st.rerun()
+    if b.button("Town centre",use_container_width=True): go("crab_town"); st.rerun()
+elif S=="crab_village":
+    for label,target in [("Cabin","crab_cabin"),("Merchant","crab_shop"),("Forest","crab_forest")]:
+        if st.button(label,use_container_width=True): go(target); st.rerun()
+    next_to("ketanmara","Return outside")
+elif S=="crab_cabin":
+    cabin("Ketanmara Cabin","Purple Key","Pink Key",
+           lambda:(setattr(st.session_state,"potions",st.session_state.potions+1),setattr(st.session_state,"coins",st.session_state.coins+2)),
+           lambda:(setattr(st.session_state,"weapon",max(4,st.session_state.weapon)),setattr(st.session_state,"coins",st.session_state.coins+1)),
+           "crab_cabin_done","crab_village")
+elif S=="crab_shop": shop("crab_shop_done","crab_village",4,2,"Ketanmara Merchant")
+elif S=="crab_forest": st.subheader("Ketanmara Forest"); pic("Ketanmara Forest"); next_to("crab_village","Return outside")
+elif S=="crab_town":
+    st.subheader("Town Centre")
+    for label,target in [("Crooked old house","indera"),("Merchant","crab_town_shop"),("Tavern","crab_tavern")]:
+        if st.button(label,use_container_width=True): go(target); st.rerun()
+    next_to("ketanmara","Return outside")
+elif S=="crab_town_shop": shop("crab_shop_done","crab_town",4,2,"Town Merchant")
+elif S=="crab_tavern":
+    st.subheader("Ketanmara Tavern"); pic("Ketanmara Tavern")
+    if st.session_state.crab_tavern_done: st.info("You already worked or rested here.")
     else:
-        c1, c2 = st.columns(2)
-        if c1.button("Work", use_container_width=True): work(); st.session_state.crab_tavern_done=True; go("crab_town"); st.rerun()
-        if c2.button("Rest", use_container_width=True): rest(); st.session_state.crab_tavern_done=True; go("crab_town"); st.rerun()
-    next_button("crab_town", "⬅️ Return")
-elif S == "indera":
-    story("☁️ Indera", "In a crooked old house, Indera tells you about Cengkerang and takes you to the Cloudy Castle.")
-    picture("Indera")
-    next_button("cengkerang_battle")
-elif S == "cengkerang_battle": battle("Cengkerang", 6, "crab_reward")
-elif S == "crab_reward":
-    story("👑 Ketanmara Restored", "Indera shows compassion. Cengkerang is spared and crowned king. You receive the Crab Shell.")
-    if "Crab Shell" not in st.session_state["important_items"]: st.session_state["important_items"].append("Crab Shell")
-    next_button("ending")
+        a,b=st.columns(2)
+        with a:
+            pic("Work",150)
+            if st.button("Work",use_container_width=True): spend_stamina(1); st.session_state.coins+=2; st.session_state.crab_tavern_done=True; go("crab_town"); st.rerun()
+        with b:
+            pic("Rest",150)
+            if st.button("Rest",use_container_width=True): st.session_state.stamina+=2; st.session_state.crab_tavern_done=True; go("crab_town"); st.rerun()
+    next_to("crab_town","Return outside")
+elif S=="indera":
+    say("You","Are you Indera? I was told someone here might know how I can return home.","indera_you")
+    say("Indera","First, Cengkerang must be stopped. Come with me to the Cloudy Castle.","indera_reply")
+    next_to("cloudy_castle")
+elif S=="cloudy_castle": st.subheader("Cloudy Castle"); pic("Cloudy Castle"); next_to("cengkerang")
+elif S=="cengkerang": battle("Cengkerang",6,"indera_cengkerang")
+elif S=="indera_cengkerang":
+    say("Indera","The battle is over, Cengkerang. Ketanmara needs peace, not more destruction.","indera_to_crab")
+    say("Cengkerang","Then take the Crab Shell. Let it open the way you seek.","crab_reply")
+    next_to("indera_reward")
+elif S=="indera_reward":
+    st.subheader("King Indera's Gift"); add_item("Crab Shell"); a,b=st.columns(2)
+    with a: pic("Indera",220)
+    with b: pic("Crab Shell",220)
+    say("You","How do I finally return home?","indera_final_you")
+    say("Indera","Return to the Ancient City. Place the fang, fur and shell into its holy door.","indera_final")
+    next_to("holy_door_3")
 
-elif S == "ending":
-    story("📖 The Ancient Book", "The Snake Fang, Wolf Fur and Crab Shell are stored in your book. The three new kings bid you farewell.")
-    for name in ["Snake Fang", "Wolf Fur", "Crab Shell"]: picture(name, 150)
-    if st.session_state.baby_wolf:
-        st.success(f"{st.session_state.baby_name} stays with you for future adventures!")
-    st.balloons()
-    if st.button("Play again", type="primary", use_container_width=True): reset(); st.rerun()
-elif S == "game_over":
-    story("Game Over", st.session_state.message or "Your adventure has ended.")
-    if st.button("Try again", type="primary", use_container_width=True): reset(); st.rerun()
+elif S=="holy_door_3": st.subheader("The Holy Door"); pic("Door 3"); st.write("Three empty silhouettes wait."); next_to("holy_door_2","Place Snake Fang")
+elif S=="holy_door_2": pic("Door 2"); st.write("The Snake Fang fits. Two silhouettes remain."); next_to("holy_door_1","Place Wolf Fur")
+elif S=="holy_door_1": pic("Door 1"); st.write("The Wolf Fur fits. One silhouette remains."); next_to("holy_door_0","Place Crab Shell")
+elif S=="holy_door_0": pic("Door 0"); st.write("All three sacred items are in place."); next_to("farewell")
+elif S=="farewell":
+    say("Drako","Remember Ophidia—and remember the courage that brought you this far.","bye_drako")
+    say(st.session_state.baby_name or "Wolf King","Remember Wolvendom. I will never forget that you found me.","bye_wolf","Baby Wolf")
+    say("Indera","Remember Ketanmara. The door is ready; it is time for you to go home.","bye_indera")
+    next_to("door_open")
+elif S=="door_open":
+    st.subheader("The Way Home"); pic("Door Open")
+    say("You","I will remember all of you. Farewell.","player_bye")
+    next_to("ending","Enter the light")
+elif S=="ending":
+    st.success("You pass through the holy door and return safely to your world."); st.balloons()
+    if st.button("Play again",use_container_width=True): reset(); st.rerun()
+elif S=="game_over":
+    st.error(st.session_state.message or "Your adventure has ended.")
+    if st.button("Try again",use_container_width=True): reset(); st.rerun()
 
-# Healing potion is available at every story point, including when the player has none.
-if S not in {"choose", "game_over", "ending"} and not st.session_state.battle_done:
+if S not in {"choose","ending","game_over"} and not st.session_state.battle_done:
     st.divider()
-    if st.button("🧪 Drink healing potion", key=f"potion_{S}", use_container_width=True):
-        drink_potion(); st.rerun()
-
-st.sidebar.button("Restart adventure", on_click=reset)
+    if st.button("🧪 Drink healing potion",key=f"heal_{S}",use_container_width=True): heal(); st.rerun()
+st.sidebar.button("Restart adventure",on_click=reset)
