@@ -298,14 +298,89 @@ elif S=="ophidia":
 elif S=="ophidia_shop": shop("ophidia_shop_done","ophidia",2,3,"Ophidia Merchant")
 elif S=="dungeon":
     st.subheader("Ophidia Dungeon")
-        if st.session_state.twin_choice is not None:
+
+    if st.session_state.twin_choice is not None:
         st.info(
             f"You already chose {st.session_state.twin_choice}. "
             "You cannot choose another companion."
         )
         next_to("ophidia", "Return outside")
-        st.stop()
-    next_to("ophidia","Return outside")
+
+    else:
+        if dialogue(
+            "dungeon",
+            [
+                (
+                    "Drako",
+                    "These ruins hide the remains of Ophidia's ancient power."
+                ),
+                (
+                    "Hydra",
+                    "Echidna guards what remains. One of us can accompany you."
+                ),
+            ],
+            cast=["Drako", "Hydra"]
+        ):
+            a, b = st.columns(2)
+
+            if a.button(
+                "Choose Drako: shield +2 coins",
+                use_container_width=True
+            ):
+                st.session_state.shields += 1
+                st.session_state.coins += 2
+                st.session_state.twin_choice = "Drako"
+                go("ophidia")
+                st.rerun()
+
+            if b.button(
+                "Choose Hydra: weapon L2 +1 coin",
+                use_container_width=True
+            ):
+                st.session_state.weapon = max(
+                    2,
+                    st.session_state.weapon
+                )
+                st.session_state.coins += 1
+                st.session_state.twin_choice = "Hydra"
+                go("ophidia")
+                st.rerun()
+
+            next_to("ophidia", "Return outside")
+
+
+elif S=="temple":
+    st.subheader("Abandoned Temple")
+    pic("Temple")
+
+    a, b = st.columns(2)
+
+    if a.button(
+        "Search trail: −2 stamina, +2 coins",
+        use_container_width=True
+    ):
+        spend_stamina(2)
+
+        if st.session_state.scene != "game_over":
+            st.session_state.coins += 2
+            go("echidna")
+
+        st.rerun()
+
+    if b.button(
+        "Rest: −2 coins, +1 stamina",
+        use_container_width=True
+    ):
+        if st.session_state.coins >= 2:
+            st.session_state.coins -= 2
+            st.session_state.stamina += 1
+            go("echidna")
+        else:
+            st.session_state.message = "You need 2 coins."
+
+        st.rerun()
+
+    next_to("ophidia", "Return outside")
 elif S=="echidna": battle("Echidna",2,"choose_ruler")
 elif S=="choose_ruler":
     if dialogue("choose_ruler",[
