@@ -83,8 +83,9 @@ def dialogue(key, lines, cast=None):
     step=st.session_state.dialogue_steps.get(key,0)
     if step>=len(lines): return True
     speaker,text,*optional_image=lines[step]
-    image=optional_image[0] if optional_image else None
-        if speaker == "Narrator":
+        image=optional_image[0] if optional_image else None
+
+    if speaker == "Narrator":
         narrate(text, f"{key}_{step}")
     else:
         say(
