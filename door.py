@@ -302,7 +302,7 @@ elif S=="elder":
         ("You","Excuse me...are you the village elder perchance?"),
         ("Elder", "You think just any old person is just the village elder or something? Thats a quite baseless identification system."),
         ("You", "Oh im so sorry sir! Could you please tell me where he is then?"),
-        ("Elder", "That would be me dear."
+        ("Elder", "That would be me dear."),
         ("You", "Oh!....thanks...anyways could you please help me get back home?"),
         ("Elder", "Where do you live, younging?"),
         ("You", "ᴙolɘvwzmHovᴙUᴙꙅlkvꙅvHkozdzYovHllm"),
