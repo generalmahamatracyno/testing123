@@ -80,11 +80,13 @@ def dialogue(key, lines, cast=None):
         columns=st.columns(len(cast))
         for column,name in zip(columns,cast):
             with column: pic(name,180)
-    step=st.session_state.dialogue_steps.get(key,0)
-    if step>=len(lines): return True
-    speaker,text,*optional_image=lines[step]
-        image=optional_image[0] if optional_image else None
+        step = st.session_state.dialogue_steps.get(key, 0)
 
+    if step >= len(lines):
+        return True
+
+    speaker, text, *optional_image = lines[step]
+    image = optional_image[0] if optional_image else None
     if speaker == "Narrator":
         narrate(text, f"{key}_{step}")
     else:
