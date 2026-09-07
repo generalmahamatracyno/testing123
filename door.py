@@ -458,7 +458,7 @@ elif S=="drako_reward_after_jail":
     if dialogue(
         "drako_reward_after_jail",
         [
-            (
+            ("Drako", "Yay."),
         ],
         cast=["Drako Crowned", "Snake Fang"]
     ):
