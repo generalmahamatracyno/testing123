@@ -76,13 +76,17 @@ def say(speaker, text, key, image=None, show_image=True):
 
 def dialogue(key, lines, cast=None):
     """Show exactly one spoken line at a time and wait for the player."""
-    if cast:
-        columns=st.columns(len(cast))
-        for column,name in zip(columns,cast):
-            with column: pic(name,180)
-        step = st.session_state.dialogue_steps.get(key, 0)
+        if cast:
+        columns = st.columns(len(cast))
+
+        for column, name in zip(columns, cast):
+            with column:
+                pic(name, 180)
+
+    step = st.session_state.dialogue_steps.get(key, 0)
 
     if step >= len(lines):
+        return True
         return True
 
     speaker, text, *optional_image = lines[step]
