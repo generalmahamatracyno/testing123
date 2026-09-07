@@ -250,7 +250,7 @@ elif S=="intro":
                          ("Narrator", "..."),
                          ("You","...")
                          ("Narrator", "Good Luck Bro!")
-                        ]
+                          ])
         next_to("start_hub")
 elif S=="start_hub":
     st.subheader("The Wilderness")
