@@ -188,7 +188,7 @@ def shop(done_key, back, weapon_level, normal_price, place):
     price=1 if st.session_state.adventurer=="Mage" else normal_price
     feedback=st.session_state.merchant_messages.get(done_key)
     st.markdown("**Merchant:**")
-    st.write(feedback or f"Welcome to my shoppy! These bad boys cost {price} coin{'s' if price!=1 else ''}."! Pretty sick deal🤑.)
+    st.write(feedback or f"Welcome to my shoppy! These bad boys cost {price} coin{'s' if price!=1 else ''}.! Pretty sick deal🤑.")
     a,b,c=st.columns(3); choice=None
     if a.button(f"Weapon L{weapon_level}",use_container_width=True): choice="weapon"
     if b.button("Potion",use_container_width=True): choice="potion"
