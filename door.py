@@ -304,7 +304,7 @@ elif S=="elder":
         ("You", "Oh im so sorry sir! Could you please tell me where he is then?"),
         ("Elder", "That would be me dear."
         ("You", "Oh!....thanks...anyways could you please help me get back home?"),
-        ("Elder", "Where do you live, younging?"
+        ("Elder", "Where do you live, younging?"),
         ("You", "ᴙolɘvwzmHovᴙUᴙꙅlkvꙅvHkozdzYovHllm"),
         ("Elder", "Ahhhh a traveler from a far realm...in order to get there you must gain three artifacts to the Pulvonia Door"),
         ("You", "Where can I get these artifacts then?"),
