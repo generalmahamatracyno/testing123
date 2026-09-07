@@ -360,7 +360,7 @@ elif S=="dungeon":
                 ("Narrator", "You stumble into a dingy dark dungeon. There you see two young twins, chained up."),
                 ("You", "Woah! You guys alright!?"),
                 ("Drako", "Please...untie us..."),
-                ("Narrator", "You untie them and help them to their feet",)
+                ("Narrator", "You untie them and help them to their feet"),
                 ("You", "So, who are you two?"),
                 ("Hydra", "We were Ophidian soldiers...but our king was killed by the snake monster Echidna, and us and the rest of our troops were thrown in this dungeon."),
                 ("Drako", "Please...kill Echidna and free us!"),
