@@ -84,7 +84,16 @@ def dialogue(key, lines, cast=None):
     if step>=len(lines): return True
     speaker,text,*optional_image=lines[step]
     image=optional_image[0] if optional_image else None
-    say(speaker,text,f"{key}_{step}",image,show_image=not bool(cast))
+        if speaker == "Narrator":
+        narrate(text, f"{key}_{step}")
+    else:
+        say(
+            speaker,
+            text,
+            f"{key}_{step}",
+            image,
+            show_image=not bool(cast)
+        )
     label="Continue ➡️" if step==len(lines)-1 else "Next dialogue ➡️"
     if st.button(label,key=f"dialogue_{key}_{step}",type="primary",use_container_width=True):
         st.session_state.dialogue_steps[key]=step+1
@@ -100,7 +109,19 @@ def next_to(scene, label="Next ➡️"):
 
 def check_alive():
     if st.session_state.hearts <= 0: go("game_over", "You ran out of hearts.")
+        
+def narrate(text, key):
+    if key in st.session_state.seen:
+        st.write(text)
+    else:
+        def words():
+            for word in text.split():
+                yield word + " "
+                time.sleep(0.045)
 
+        st.write_stream(words())
+        st.session_state.seen.append(key)
+    
 def spend_stamina(n):
     st.session_state.stamina -= n
     if st.session_state.stamina <= 0:
@@ -164,16 +185,16 @@ def shop(done_key, back, weapon_level, normal_price, place):
     price=1 if st.session_state.adventurer=="Mage" else normal_price
     feedback=st.session_state.merchant_messages.get(done_key)
     st.markdown("**Merchant:**")
-    st.write(feedback or f"Welcome! Choose one item. Each costs {price} coin{'s' if price!=1 else ''}.")
+    st.write(feedback or f"Welcome to my shoppy! These bad boys cost {price} coin{'s' if price!=1 else ''}."! Pretty sick deal🤑.)
     a,b,c=st.columns(3); choice=None
     if a.button(f"Weapon L{weapon_level}",use_container_width=True): choice="weapon"
     if b.button("Potion",use_container_width=True): choice="potion"
     if c.button("Shield",use_container_width=True): choice="shield"
     if choice:
         if st.session_state[done_key]:
-            st.session_state.merchant_messages[done_key]="Oh, sorry! You already bought something from me."
+            st.session_state.merchant_messages[done_key]="Hey,hey calm down, dont bankrupt me buddy 😂."
         elif st.session_state.coins<price:
-            st.session_state.merchant_messages[done_key]="Oh, I'm sorry! You don't have enough coins."
+            st.session_state.merchant_messages[done_key]="Ouch....card declined man 👀."
         else:
             st.session_state.coins-=price
             if choice=="weapon": st.session_state.weapon=max(st.session_state.weapon,weapon_level)
@@ -218,7 +239,15 @@ if S=="choose":
             pic(name,180); st.markdown(f"**{name}**"); st.caption(ability)
             if st.button(f"Choose {name}",key=name,use_container_width=True): choose(name); st.rerun()
 elif S=="intro":
-    if dialogue("intro",[("You","Oh my gosh... where am I? How did I get here? I need to find a way back home.")]):
+    if dialogue("intro",[("Narrator", "Welcome to your adventure!"),
+                         ("You", "Who are you? And where am I?"),
+                         ("Narrator", "Dont even worry about it gang. If you wish to go home, why dont you socialize a bit?"),
+                         ("You", "How can i socialize in this very empty place...?"),
+                         ("Narrator", "Um"),
+                         ("Narrator", "..."),
+                         ("You","...")
+                         ("Narrator", "Good Luck Bro!")
+                        ]
         next_to("start_hub")
 elif S=="start_hub":
     st.subheader("The Wilderness")
@@ -267,8 +296,18 @@ elif S=="ancient_tavern":
     next_to("ancient_city","Return outside")
 elif S=="elder":
     if dialogue("elder",[
-        ("You","Do you know how I can return home?"),
-        ("Elder","Travel to Ophidia and ask the people there. Take this map."),
+        ("You","Excuse me...are you the village elder perchance?"),
+        ("Elder", "You think just any old person is just the village elder or something? Thats a quite baseless identification system."),
+        ("You", "Oh im so sorry sir! Could you please tell me where he is then?"),
+        ("Elder", "That would be me dear."
+        ("You", "Oh!....thanks...anyways could you please help me get back home?"),
+        ("Elder", "Where do you live, younging?"
+        ("You", "ᴙolɘvwzmHovᴙUᴙꙅlkvꙅvHkozdzYovHllm"),
+        ("Elder", "Ahhhh a traveler from a far realm...in order to get there you must gain three artifacts to the Pulvonia Door"),
+        ("You", "Where can I get these artifacts then?"),
+        ("Elder", "The first artifact is in Ophidia. Heres the map...ask the king of the realm for the next artifacts..."),
+        ("You", "Thanks for the help oldie"),
+        ("Elder", "ouch."),
     ]): next_to("ophidia")
 
 elif S=="ophidia":
@@ -310,14 +349,16 @@ elif S=="dungeon":
         if dialogue(
             "dungeon",
             [
-                (
-                    "Drako",
-                    "These ruins hide the remains of Ophidia's ancient power."
-                ),
-                (
-                    "Hydra",
-                    "Echidna guards what remains. One of us can accompany you."
-                ),
+                ("Narrator", "You stumble into a dingy dark dungeon. There you see two young twins, chained up.")
+                ("You", "Woah! You guys alright!?"),
+                ("Drako", "Please...untie us..."),
+                ("Narrator", "You untie them and help them to their feet",)
+                ("You", "So, who are you two?"),
+                ("Hydra", "We were Ophidian soldiers...but our king was killed by the snake monster Echidna, and us and the rest of our troops were thrown in this dungeon.),
+                ("Drako", "Please...kill Echidna and free us!"),
+                ("You", "But how... im too weak.."),
+                ("Drako", "I have my shield you can use."),
+                ("Hydra", "I have this sword you can use."),
             ],
             cast=["Drako", "Hydra"]
         ):
@@ -328,7 +369,7 @@ elif S=="dungeon":
                 use_container_width=True
             ):
                 st.session_state.shields += 1
-                st.session_state.coins += 2
+             
                 st.session_state.twin_choice = "Drako"
                 go("ophidia")
                 st.rerun()
@@ -341,7 +382,7 @@ elif S=="dungeon":
                     2,
                     st.session_state.weapon
                 )
-                st.session_state.coins += 1
+                
                 st.session_state.twin_choice = "Hydra"
                 go("ophidia")
                 st.rerun()
@@ -384,17 +425,42 @@ elif S=="temple":
 elif S=="echidna": battle("Echidna",2,"choose_ruler")
 elif S=="choose_ruler":
     if dialogue("choose_ruler",[
-        ("Drako","The battle is over. Which of us do you choose to lead Ophidia?"),
-        ("Hydra","Choose carefully. Which of us do you choose?"),
-    ],cast=["Drako","Hydra"]):
+        ("Drako","OH MY GOD!!!!! WE DID IT!!!! ECHIDNA HAS BEEN SLAYED!!!!"),
+        ("You", "We?"),
+        ("Drako", "Focus on the victory battle would you?"),
+        ("Hydra", "Look."),
+        ("Narrator", "She points at a pile of bones with a crown on top"),
+        ("Drako", "Oh no.... King ididntgivethisguyaname... has been slayed..Who will continue to rule Ophidia now?"),
+        ("Hydra", "Dear Protector of Ophidia...we would propose you to be our leader."),
+        ("You", "Im sorry Hydra but I cannot do that... how about i give the leadership to one of you two?"),
+        ("Hydra", "Really? You believe we have what it takes?"),
+        ("Drako", "I hope im picked!"),
+        ],
+        
+        cast=["Drako","Hydra"]):
         a,b=st.columns(2)
         if a.button("Crown Drako",use_container_width=True): add_item("Snake Fang"); go("drako_reward"); st.rerun()
         if b.button("Crown Hydra",use_container_width=True): st.session_state.hearts-=1; check_alive(); add_item("Snake Fang"); go("hydra_jail"); st.rerun()
 elif S=="hydra_jail":
     if dialogue("hydra_jail",[
+        ("You", "Hydra, after this very long fighting journey that lasted 4 days but i didnt show the players, i believe you are best fit for the position of the throne"),
+        ("Hydra", "He..hehe...thank you, dear {st.session_state,adventurer}. I promise I will lead Ophidia to its future."),
         ("Hydra","You chose poorly. Both of you will remain here while I take the throne."),
         ("Drako","We will escape together. Ophidia cannot be left to her rule."),
-    ],cast=["Hydra Jail"]): next_to("drako_reward")
+    ],cast=["Hydra Jail"]): next_to("drako_reward_after_jail")
+
+elif S=="drako_reward_after_jail":
+    st.subheader("Ophidia Is Freed")
+
+    if dialogue(
+        "drako_reward_after_jail",
+        [
+            (
+        ],
+        cast=["Drako Crowned", "Snake Fang"]
+    ):
+        next_to("before_wolvendom")
+    
 elif S=="drako_reward":
     st.subheader("King Drako's Gift")
     if dialogue("drako_reward",[
