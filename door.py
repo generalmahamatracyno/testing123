@@ -208,7 +208,7 @@ def shop(done_key, back, weapon_level, normal_price, place):
             elif choice=="potion": st.session_state.potions+=1
             else: st.session_state.shields+=1
             st.session_state[done_key]=True
-            st.session_state.merchant_messages[done_key]="Thank you for your purchase!"
+            st.session_state.merchant_messages[done_key]="Pleasure doing business with ya."
         st.rerun()
     next_to(back,"Return outside")
 
@@ -292,7 +292,7 @@ elif S=="ancient_city":
     if b.button("Village elder",use_container_width=True): go("elder"); st.rerun()
 elif S=="ancient_tavern":
     st.subheader("Ancient City Tavern"); pic("Ancient Tavern")
-    if st.session_state.ancient_tavern_done: st.info("You already chose work or rest here.")
+    if st.session_state.ancient_tavern_done: st.info("Leave, freeloader.")
     else:
         a,b=st.columns(2)
         with a:
@@ -448,13 +448,23 @@ elif S=="choose_ruler":
         cast=["Drako","Hydra"]):
         a,b=st.columns(2)
         if a.button("Crown Drako",use_container_width=True): add_item("Snake Fang"); go("drako_reward"); st.rerun()
-        if b.button("Crown Hydra",use_container_width=True): st.session_state.hearts-=1; check_alive(); add_item("Snake Fang"); go("hydra_jail"); st.rerun()
+        if b.button("Crown Hydra",use_container_width=True): st.session_state.hearts-=1; check_alive(); add_item(":green[Snake Fang]"); go("hydra_jail"); st.rerun()
 elif S=="hydra_jail":
     if dialogue("hydra_jail",[
         ("You", "Hydra, after this very long fighting journey that lasted 4 days but i didnt show the players, i believe you are best fit for the position of the throne"),
-        ("Hydra", "He..hehe...thank you, dear {st.session_state,adventurer}. I promise I will lead Ophidia to its future."),
-        ("Hydra","You chose poorly. Both of you will remain here while I take the throne."),
-        ("Drako","We will escape together. Ophidia cannot be left to her rule."),
+        ("Hydra", "He..hehe...thank you, dear {st.session_state.adventurer}. I promise I will lead Ophidia to its future."),
+        ("You", "Really?"),
+        ("Hydra", " Oh!           No LOL"),
+        ("Narrator", "Hydra throws you and Drako in jail."),
+        ("Drako", "NO! {st.session_state.adventurer}, we must end her reign of terror!"),
+        ("You", "Man, could'nt you tell me your sister was evil?"),
+        ("Drako", "Shes adopted."),
+        ("Hydra", "Your twins."),
+        ("Drako", "FOCUS ON THE TAKE DOWN MISSION."),
+        ("Narrator", "Taking down Hydra will take away one heart. Would you like to proceed?"),
+        ("Narrator", " "),
+        ("Narrator", "No option actually. You take down Hydra and lose a heart!"),
+       
     ],cast=["Hydra Jail"]): next_to("drako_reward_after_jail")
 
 elif S=="drako_reward_after_jail":
@@ -462,8 +472,12 @@ elif S=="drako_reward_after_jail":
 
     if dialogue(
         "drako_reward_after_jail",
-        [
-            ("Drako", "Yay."),
+        [  ("You", "Hydra, after this very long fighting journey that lasted 4 days but i didnt show the players, i believe you are best fit for the position of the throne."),
+         ("Hydra", "Ahh...bummer.."),
+         ("Drako", "Sure....Thank You! I will lead Ophidia to victory. Now about yourself, why did you come to Ophidia?"),
+         ("You", "I came here for the 3 artifacts. I need it to get back home to ᴙolɘvwzmHovᴙUᴙꙅlkvꙅvHkozdzYovHllm"),
+         ("Drako", "Ahhh I see! Here, the first artifact is a Snake Fang. The next artifact is in Wolvendom. Here is the map."),
+         ("You", "Thank You Drako. Make Ophidia Great Again."),
         ],
         cast=["Drako Crowned", "Snake Fang"]
     ):
@@ -471,9 +485,12 @@ elif S=="drako_reward_after_jail":
     
 elif S=="drako_reward":
     st.subheader("King Drako's Gift")
-    if dialogue("drako_reward",[
-        ("You","How can I return to my home?"),
-        ("Drako","Take this Snake Fang and map to Wolvendom. Someone there may know the way."),
+    if dialogue("drako_reward",[  
+        ("You", "Drako...I crown you king of Ophidia. 
+         ("Drako", "Sure....Thank You! I will lead Ophidia to victory. Now about yourself, why did you come to Ophidia?"),
+         ("You", "I came here for the 3 artifacts."),
+         ("Drako", "Ahhh I see! Here, the first artifact is a snake fang. The next artifact is in Wolvendom. Here is the map."),
+         ("You", "Thank You Drako. Make Ophidia Great Again."),
     ],cast=["Drako Crowned","Snake Fang"]): next_to("before_wolvendom")
 elif S=="before_wolvendom":
     st.subheader("Journey to Wolvendom"); a,b=st.columns(2)
@@ -498,13 +515,19 @@ elif S=="wolf_forest":
     next_to("wolvendom","Return outside")
 elif S=="injured_wolf":
     st.subheader("The Hidden Wolf")
-    if dialogue("injured_wolf",[("Baby Wolf","Please... can you help me?","Injured Wolf")]):
+    if dialogue("injured_wolf",[
+        ("Narrator", "You hear a weak whimpering sound behind the bushes"),
+        ("Baby Wolf","Please... can you help me?"),
+        ("You", "OH NO! Are you alright? What do you need to help you?"),
+        ("Baby Wolf", "A healing potion...please.pe...."),
+    ]
+               ):
         if st.session_state.baby_wolf: st.success("The wolf has already been rescued."); next_to("wolf_forest","Return")
         elif st.session_state.potions>0:
             if st.button("Use healing potion",use_container_width=True): st.session_state.potions-=1; st.session_state.baby_wolf=True; go("name_wolf"); st.rerun()
             next_to("wolf_forest","Leave")
         else:
-            st.warning("You have no potion. If you proceed, helping the wolf will cost exactly 1 heart.")
+            st.warning("Since you did'nt save a potion, you will rescue this pup with your life. Do you accept?")
             a,b=st.columns(2)
             if a.button("Proceed",use_container_width=True): st.session_state.wolf_warning=True; st.session_state.hearts-=1; check_alive(); st.session_state.baby_wolf=True; go("name_wolf"); st.rerun()
             if b.button("Leave",use_container_width=True): go("wolf_forest"); st.rerun()
@@ -518,13 +541,16 @@ elif S=="maha_alone":
     battle("Maha Bhediya",3,"missed_wolf")
 elif S=="missed_wolf":
     st.session_state.maha_fought_alone=True
-    st.info("Maha Bhediya has been defeated, but Wolvendom still has no ruler. You sense that you missed someone near the forest entrance. Search the bushes.")
+    st.info("Well done on defeating Maha Bhediya! However, it seems there is no eligible ruler for this reigon...perhaps journeying back to the forest will get you the perfect candidate.")
     next_to("wolf_forest","Return to forest")
 elif S=="wolf_reunion":
     st.subheader("A Family Reunited")
     if dialogue("wolf_reunion",[
-        (st.session_state.baby_name or "Baby Wolf","Father, stop! This adventurer saved me. There is no need to fight.","Baby Wolf"),
-        ("Maha Bhediya","Then Wolvendom's future belongs to you. I will step aside."),
+        ("Maha Bhediya", "Who dare awake me.....you want to fight, little {st.session_state.adventurer}"),
+        (st.session_state.baby_name or "Baby Wolf","Dad, stop! This {st.session_state.adventurer} saved my life. I will not allow you to hurt them.","Baby Wolf"),
+        ("Maha Bhediya",f"{st.session_state.baby_wolf or 'Baby Wolf'}! Your no longer hurt! Im so glad! You say this {st.session_state.adventurer} saved you? Very well then... I shall not fight"),
+        ("You", "Its no problem Great King."),
+        ("Maha Bhediya", "As a token of gratitude, why not take the position of King of Wolvendom! I am far too old to be running this ship any longer
     ]): next_to("wolf_reward")
 elif S=="wolf_reward":
     st.subheader("Wolvendom's New King"); add_item("Wolf Fur")
