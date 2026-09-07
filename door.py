@@ -248,8 +248,8 @@ elif S=="intro":
                          ("You", "How can i socialize in this very empty place...?"),
                          ("Narrator", "Um"),
                          ("Narrator", "..."),
-                         ("You","...")
-                         ("Narrator", "Good Luck Bro!")
+                         ("You","..."),
+                         ("Narrator", "Good Luck Bro!"),
                           ]
                ):
         next_to("start_hub")
