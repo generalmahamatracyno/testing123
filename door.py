@@ -357,7 +357,7 @@ elif S=="dungeon":
         if dialogue(
             "dungeon",
             [
-                ("Narrator", "You stumble into a dingy dark dungeon. There you see two young twins, chained up.")
+                ("Narrator", "You stumble into a dingy dark dungeon. There you see two young twins, chained up."),
                 ("You", "Woah! You guys alright!?"),
                 ("Drako", "Please...untie us..."),
                 ("Narrator", "You untie them and help them to their feet",)
