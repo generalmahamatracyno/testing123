@@ -357,7 +357,7 @@ elif S=="dungeon":
                 ("Drako", "Please...untie us..."),
                 ("Narrator", "You untie them and help them to their feet",)
                 ("You", "So, who are you two?"),
-                ("Hydra", "We were Ophidian soldiers...but our king was killed by the snake monster Echidna, and us and the rest of our troops were thrown in this dungeon.),
+                ("Hydra", "We were Ophidian soldiers...but our king was killed by the snake monster Echidna, and us and the rest of our troops were thrown in this dungeon."),
                 ("Drako", "Please...kill Echidna and free us!"),
                 ("You", "But how... im too weak.."),
                 ("Drako", "I have my shield you can use."),
