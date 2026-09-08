@@ -550,7 +550,8 @@ elif S=="wolf_reunion":
         (st.session_state.baby_name or "Baby Wolf","Dad, stop! This {st.session_state.adventurer} saved my life. I will not allow you to hurt them.","Baby Wolf"),
         ("Maha Bhediya",f"{st.session_state.baby_wolf or 'Baby Wolf'}! Your no longer hurt! Im so glad! You say this {st.session_state.adventurer} saved you? Very well then... I shall not fight"),
         ("You", "Its no problem Great King."),
-        ("Maha Bhediya", "As a token of gratitude, why not take the position of King of Wolvendom! I am far too old to be running this ship any longer
+        ("Maha Bhediya", f"It seems im getting too old for this leadership position. {st.session_state.baby_wolf or "Baby Wolf"}, I crown you King of Wolvendom.),
+        (st.session_state.baby_name or "Baby Wolf", "Yes Father."),
     ]): next_to("wolf_reward")
 elif S=="wolf_reward":
     st.subheader("Wolvendom's New King"); add_item("Wolf Fur")
