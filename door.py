@@ -142,7 +142,7 @@ def heal():
     else:
         n=2 if st.session_state.adventurer=="Priest" else 1
         old=st.session_state.hearts
-        st.session_state.hearts=min(st.session_state.max_hearts,old+n)
+        st.session_state.hearts=min(st.session_state.max_hearts,old+n) 
         st.session_state.potions-=1
         st.session_state.message=f"The potion restored {st.session_state.hearts-old} heart(s)."
 
